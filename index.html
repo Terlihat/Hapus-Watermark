@@ -133,7 +133,7 @@
                     
                     <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-900/90 backdrop-blur-md flex flex-col items-center justify-center z-30">
                         <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-16 w-16 mb-4"></div>
-                        <p class="text-lg font-semibold animate-pulse gradient-text">AI sedang menghapus watermark pilihan Anda...</p>
+                        <p class="text-lg font-semibold animate-pulse gradient-text">AI sedang bekerja menghapus watermark pilihan Anda...</p>
                     </div>
                 </div>
 
@@ -155,7 +155,7 @@
 
     <footer class="py-6 text-center text-gray-500 text-sm border-t border-gray-800 mt-auto">
         <p>&copy; 2026 EraseAI. Dibuat dengan <i class="fa-solid fa-heart text-red-500"></i> untuk Komunitas.</p>
-        <p class="mt-1 text-xs">v1.4.0 | Interactive Precision Brush Edition</p>
+        <p class="mt-1 text-xs">v1.4.1 | Strict Debug & Hard Error Edition</p>
     </footer>
 
     <script>
@@ -187,7 +187,7 @@
         let currentImageDataURL = null;
         let originalImageElement = new Image();
         let isDrawing = false;
-        let drawingActions = []; // Menyimpan koordinat gambar
+        let drawingActions = []; 
 
         // Drag & Drop Event
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -209,7 +209,6 @@
                     originalImageElement.onload = () => {
                         imagePreview.src = currentImageDataURL;
                         
-                        // Set visibilitas komponen awal
                         imagePreview.classList.remove('hidden');
                         canvas.classList.remove('hidden');
                         brushControls.classList.remove('hidden');
@@ -220,7 +219,6 @@
                         dropZone.classList.add('hidden');
                         workspaceArea.classList.remove('hidden');
                         
-                        // Menyesuaikan ukuran kanvas kuas dengan dimensi tampilan gambar asli
                         setTimeout(resizeCanvas, 100);
                     };
                 }
@@ -235,10 +233,9 @@
             canvas.style.left = imagePreview.offsetLeft + 'px';
             canvas.style.top = imagePreview.offsetTop + 'px';
             
-            // Reset settingan kuas
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
-            ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)'; // Merah muda transparan untuk kuas utama
+            ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)'; 
             clearCanvas();
         }
 
@@ -250,12 +247,10 @@
         btnClearCanvas.addEventListener('click', clearCanvas);
         window.addEventListener('resize', resizeCanvas);
 
-        // Kontrol Slider Ukuran Kuas
         brushSizeInput.addEventListener('input', (e) => {
             brushSizeVal.innerText = e.target.value + 'px';
         });
 
-        // Logika Menggambar Kuas (Mouse & Touch)
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -304,7 +299,6 @@
             clearCanvas();
         });
 
-        // PEMBUATAN MASK HITAM PUTIH RESOLUSI ASLI SEBELUM KIRIM API
         function generateBlackWhiteMask() {
             const maskCanvas = document.createElement('canvas');
             const origW = originalImageElement.naturalWidth;
@@ -313,16 +307,13 @@
             maskCanvas.height = origH;
             
             const mCtx = maskCanvas.getContext('2d');
-            // Background hitam penuh (area aman)
             mCtx.fillStyle = '#000000';
             mCtx.fillRect(0, 0, origW, origH);
             
-            // Menggambar ulang goresan kuas dengan warna putih di atas background hitam
             mCtx.lineJoin = 'round';
             mCtx.lineCap = 'round';
             mCtx.strokeStyle = '#ffffff';
             
-            // Faktor skala perbandingan gambar asli vs canvas monitor layar
             const scaleX = origW / canvas.width;
             const scaleY = origH / canvas.height;
             
@@ -340,11 +331,11 @@
             return maskCanvas.toDataURL('image/png');
         }
 
-        // Trigger Tombol Proses AI Utama
+        // AKSI TOMBOL PROSES (SUDAH DIBEKALI PENDETEKSI ERROR STRUKTUR KUSTOM)
         btnProcess.addEventListener('click', async () => {
             if (!currentImageDataURL) return;
             if (drawingActions.length === 0) {
-                alert("Silakan sapukan kuas terlebih dahulu pada area watermark yang ingin dihilangkan.");
+                alert("Silakan seka/warnai area watermark terlebih dahulu menggunakan kuas.");
                 return;
             }
 
@@ -353,7 +344,6 @@
             btnReset.disabled = true;
 
             try {
-                // Generate Mask Hitam Putih Sesuai Letak Coretan User
                 const maskDataURL = generateBlackWhiteMask();
 
                 const response = await fetch(WORKER_API_URL, {
@@ -365,11 +355,10 @@
                     })
                 });
 
-                if (!response.ok) throw new Error("Respons Cloudflare gagal: " + response.status);
+                // Membaca JSON respons apa pun status kodenya (400, 500, dll)
+                const data = await response.json().catch(() => ({ success: false, error: "Gagal mengurai respons JSON dari server Cloudflare." }));
 
-                const data = await response.json();
-
-                if (data.success) {
+                if (response.ok && data.success) {
                     loadingOverlay.classList.add('hidden');
                     imagePreview.classList.add('hidden');
                     canvas.classList.add('hidden');
@@ -387,12 +376,13 @@
                     btnProcess.classList.add('hidden');
                     btnDownload.classList.remove('hidden');
                 } else {
-                    alert("Gagal memproses gambar dari AI Worker: " + data.error);
+                    // MEMUNCULKAN EROR ASLI JIKA ADA MASALAH
+                    alert("🚨 ERROR DARI SERVER CLOUDFLARE:\n" + (data.error || "Terjadi kesalahan sistem tidak diketahui."));
                     loadingOverlay.classList.add('hidden');
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Kesalahan transmisi atau token Replicate di Cloudflare Anda habis/salah.");
+                alert("🚨 KESALAHAN TRANSMISI:\nGagal terhubung ke Cloudflare Worker. Periksa koneksi internet atau status endpoint Worker Anda.");
                 loadingOverlay.classList.add('hidden');
             } finally {
                 btnProcess.disabled = false;
