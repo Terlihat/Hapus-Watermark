@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EraseAI - Watermark Remover</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        dark: '#0f172a',
+                        card: '#1e293b',
+                        primary: '#3b82f6',
+                        secondary: '#8b5cf6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: white; }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .drop-zone.dragover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        .loader {
+            border-top-color: #8b5cf6;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-secondary selection:text-white">
+
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="text-2xl font-extrabold tracking-tighter">
+            <i class="fa-solid fa-eraser text-secondary mr-2"></i>Erase<span class="text-primary">AI</span>
+        </div>
+        <div>
+            <a href="https://github.com/username-kamu" target="_blank" class="text-gray-400 hover:text-white transition">
+                <i class="fa-brands fa-github text-xl"></i>
+            </a>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col items-center justify-center px-4 py-12">
+        
+        <div class="text-center mb-10 max-w-2xl">
+            <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
+                Hapus Watermark dengan <br/> <span class="gradient-text">Kecerdasan Buatan</span>
+            </h1>
+            <p class="text-gray-400 text-lg">
+                Unggah gambar Anda, dan biarkan AI kami membersihkan objek, teks, atau watermark yang tidak diinginkan dalam hitungan detik.
+            </p>
+        </div>
+
+        <div class="glass rounded-2xl w-full max-w-3xl p-8 shadow-2xl relative overflow-hidden">
+            
+            <div id="uploadArea" class="drop-zone border-2 border-dashed border-gray-600 rounded-xl p-12 text-center transition-all duration-300 cursor-pointer hover:border-primary">
+                <input type="file" id="fileInput" class="hidden" accept="image/png, image/jpeg, image/webp" />
+                <div class="text-6xl text-gray-500 mb-4"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <h3 class="text-xl font-semibold mb-2">Drag & Drop gambar di sini</h3>
+                <p class="text-gray-400 mb-6">atau klik untuk menelusuri file Anda (PNG, JPG, WEBP)</p>
+                <button onclick="document.getElementById('fileInput').click()" class="bg-primary hover:bg-blue-600 text-white px-6 py-3 rounded-full font-semibold transition shadow-lg shadow-blue-500/30">
+                    Pilih Gambar
+                </button>
+            </div>
+
+            <div id="workspaceArea" class="hidden flex flex-col items-center">
+                <div class="w-full relative rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-6 flex justify-center items-center min-h-[300px]">
+                    <img id="imagePreview" src="" alt="Preview" class="max-h-[500px] object-contain">
+                    
+                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-16 w-16 mb-4"></div>
+                        <p class="text-lg font-semibold animate-pulse gradient-text">AI sedang memproses gambar...</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 w-full justify-center">
+                    <button id="btnReset" class="px-6 py-3 rounded-full font-semibold border border-gray-600 hover:bg-gray-800 transition">
+                        Batal
+                    </button>
+                    <button id="btnProcess" class="bg-gradient-to-r from-secondary to-primary hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-full font-bold transition shadow-lg shadow-purple-500/30">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Hapus Watermark
+                    </button>
+                    <button id="btnDownload" class="hidden bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold transition shadow-lg shadow-green-500/30">
+                        <i class="fa-solid fa-download mr-2"></i> Unduh Hasil
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-6 text-center text-gray-500 text-sm border-t border-gray-800">
+        <p>&copy; 2026 EraseAI. Dibuat dengan <i class="fa-solid fa-heart text-red-500"></i> untuk Komunitas.</p>
+        <p class="mt-1 text-xs">v1.0.0 | Frontend Edition</p>
+    </footer>
+
+    <script>
+        const dropZone = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const workspaceArea = document.getElementById('workspaceArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const btnReset = document.getElementById('btnReset');
+        const btnProcess = document.getElementById('btnProcess');
+        const btnDownload = document.getElementById('btnDownload');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        let currentFile = null;
+
+        // Handle Drag & Drop Events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    currentFile = file;
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        imagePreview.src = reader.result;
+                        dropZone.classList.add('hidden');
+                        workspaceArea.classList.remove('hidden');
+                    }
+                } else {
+                    alert("Tolong unggah file gambar (JPG, PNG, dll).");
+                }
+            }
+        }
+
+        // Reset Button
+        btnReset.addEventListener('click', () => {
+            currentFile = null;
+            imagePreview.src = "";
+            fileInput.value = "";
+            workspaceArea.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            btnProcess.classList.remove('hidden');
+            btnDownload.classList.add('hidden');
+        });
+
+        // Process Button (Simulation)
+        btnProcess.addEventListener('click', () => {
+            loadingOverlay.classList.remove('hidden');
+            btnProcess.disabled = true;
+            btnReset.disabled = true;
+
+            // SIMULASI PROSES API (Delay 3 detik)
+            // Di versi selanjutnya, di sinilah kita akan meletakkan kode fetch() ke API AI yang sebenarnya.
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+                
+                // Menukar tombol Proses dengan Unduh
+                btnProcess.classList.add('hidden');
+                btnDownload.classList.remove('hidden');
+                
+                btnProcess.disabled = false;
+                btnReset.disabled = false;
+                
+                // Opsional: Anda bisa menambahkan efek visual (seperti filter) untuk mensimulasikan perubahan
+                // imagePreview.style.filter = "contrast(1.2)"; 
+                
+            }, 3000);
+        });
+
+        // Download Button (Downloads the displayed image)
+        btnDownload.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'EraseAI_Result.png';
+            link.href = imagePreview.src;
+            link.click();
+        });
+    </script>
+</body>
+</html>
