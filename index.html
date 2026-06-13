@@ -48,6 +48,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Styling untuk Slider Before/After */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            cursor: ew-resize;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased selection:bg-secondary selection:text-white">
@@ -57,7 +65,7 @@
             <i class="fa-solid fa-eraser text-secondary mr-2"></i>Erase<span class="text-primary">AI</span>
         </div>
         <div>
-            <a href="https://github.com/username-kamu" target="_blank" class="text-gray-400 hover:text-white transition">
+            <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-white transition">
                 <i class="fa-brands fa-github text-xl"></i>
             </a>
         </div>
@@ -70,11 +78,11 @@
                 Hapus Watermark dengan <br/> <span class="gradient-text">Kecerdasan Buatan</span>
             </h1>
             <p class="text-gray-400 text-lg">
-                Unggah gambar Anda, dan biarkan AI kami membersihkan objek, teks, atau watermark yang tidak diinginkan dalam hitungan detik.
+                Unggah gambar Anda, dan biarkan AI kami membersihkan objek atau watermark yang tidak diinginkan dalam hitungan detik.
             </p>
         </div>
 
-        <div class="glass rounded-2xl w-full max-w-3xl p-8 shadow-2xl relative overflow-hidden">
+        <div class="glass rounded-2xl w-full max-w-4xl p-8 shadow-2xl relative overflow-hidden">
             
             <div id="uploadArea" class="drop-zone border-2 border-dashed border-gray-600 rounded-xl p-12 text-center transition-all duration-300 cursor-pointer hover:border-primary">
                 <input type="file" id="fileInput" class="hidden" accept="image/png, image/jpeg, image/webp" />
@@ -87,24 +95,42 @@
             </div>
 
             <div id="workspaceArea" class="hidden flex flex-col items-center">
-                <div class="w-full relative rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-6 flex justify-center items-center min-h-[300px]">
-                    <img id="imagePreview" src="" alt="Preview" class="max-h-[500px] object-contain">
+                
+                <div id="imageContainer" class="w-full relative rounded-lg overflow-hidden border border-gray-700 bg-gray-900 mb-6 flex justify-center items-center aspect-video max-h-[500px]">
                     
-                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                    <img id="imagePreview" src="" alt="Preview" class="w-full h-full object-contain">
+                    
+                    <div id="compareContainer" class="hidden absolute inset-0 w-full h-full">
+                        <img id="imageAfter" src="" class="absolute inset-0 w-full h-full object-contain" />
+                        <img id="imageBefore" src="" class="absolute inset-0 w-full h-full object-contain" style="clip-path: inset(0 50% 0 0);" />
+                        
+                        <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20" id="compareSlider" />
+                        
+                        <div id="sliderHandle" class="absolute top-0 bottom-0 left-1/2 w-1 bg-white pointer-events-none z-10 flex items-center justify-center">
+                            <div class="w-10 h-10 bg-white rounded-full shadow-2xl flex items-center justify-center text-gray-800 text-sm ring-4 ring-primary/30">
+                                <i class="fa-solid fa-arrows-left-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded text-sm z-10">Asli</div>
+                        <div class="absolute top-4 right-4 bg-primary/80 backdrop-blur-sm text-white px-3 py-1 rounded text-sm z-10">Hasil AI</div>
+                    </div>
+                    
+                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-900/90 backdrop-blur-md flex flex-col items-center justify-center z-30">
                         <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-16 w-16 mb-4"></div>
-                        <p class="text-lg font-semibold animate-pulse gradient-text">AI sedang memproses gambar...</p>
+                        <p class="text-lg font-semibold animate-pulse gradient-text">AI sedang menghapus watermark...</p>
                     </div>
                 </div>
 
                 <div class="flex gap-4 w-full justify-center">
                     <button id="btnReset" class="px-6 py-3 rounded-full font-semibold border border-gray-600 hover:bg-gray-800 transition">
-                        Batal
+                        Pilih Gambar Lain
                     </button>
                     <button id="btnProcess" class="bg-gradient-to-r from-secondary to-primary hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-full font-bold transition shadow-lg shadow-purple-500/30">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Hapus Watermark
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Bersihkan Sekarang
                     </button>
                     <button id="btnDownload" class="hidden bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold transition shadow-lg shadow-green-500/30">
-                        <i class="fa-solid fa-download mr-2"></i> Unduh Hasil
+                        <i class="fa-solid fa-download mr-2"></i> Unduh Hasil AI
                     </button>
                 </div>
             </div>
@@ -112,9 +138,9 @@
         </div>
     </main>
 
-    <footer class="py-6 text-center text-gray-500 text-sm border-t border-gray-800">
+    <footer class="py-6 text-center text-gray-500 text-sm border-t border-gray-800 mt-auto">
         <p>&copy; 2026 EraseAI. Dibuat dengan <i class="fa-solid fa-heart text-red-500"></i> untuk Komunitas.</p>
-        <p class="mt-1 text-xs">v1.0.0 | Frontend Edition</p>
+        <p class="mt-1 text-xs">v1.1.0 | Interactive Slider Edition</p>
     </footer>
 
     <script>
@@ -126,95 +152,111 @@
         const btnProcess = document.getElementById('btnProcess');
         const btnDownload = document.getElementById('btnDownload');
         const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        // Elemen Slider Before/After
+        const compareContainer = document.getElementById('compareContainer');
+        const imageBefore = document.getElementById('imageBefore');
+        const imageAfter = document.getElementById('imageAfter');
+        const compareSlider = document.getElementById('compareSlider');
+        const sliderHandle = document.getElementById('sliderHandle');
 
-        let currentFile = null;
+        let currentImageDataURL = null;
 
-        // Handle Drag & Drop Events
+        // 1. Logika Drag & Drop
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
         });
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        ['dragenter', 'dragover'].forEach(eventName => dropZone.classList.add('dragover'));
+        ['dragleave', 'drop'].forEach(eventName => dropZone.classList.remove('dragover'));
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            let dt = e.dataTransfer;
-            let files = dt.files;
-            handleFiles(files);
-        });
-
-        fileInput.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
+        dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+        fileInput.addEventListener('change', function() { handleFiles(this.files); });
 
         function handleFiles(files) {
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type.startsWith('image/')) {
-                    currentFile = file;
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => {
-                        imagePreview.src = reader.result;
-                        dropZone.classList.add('hidden');
-                        workspaceArea.classList.remove('hidden');
-                    }
-                } else {
-                    alert("Tolong unggah file gambar (JPG, PNG, dll).");
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.readAsDataURL(files[0]);
+                reader.onload = () => {
+                    currentImageDataURL = reader.result;
+                    imagePreview.src = currentImageDataURL;
+                    
+                    // Reset UI State
+                    imagePreview.classList.remove('hidden');
+                    compareContainer.classList.add('hidden');
+                    btnProcess.classList.remove('hidden');
+                    btnDownload.classList.add('hidden');
+                    
+                    dropZone.classList.add('hidden');
+                    workspaceArea.classList.remove('hidden');
                 }
+            } else {
+                alert("Mohon unggah file gambar yang valid.");
             }
         }
 
-        // Reset Button
+        // 2. Tombol Batal/Reset
         btnReset.addEventListener('click', () => {
-            currentFile = null;
-            imagePreview.src = "";
+            currentImageDataURL = null;
             fileInput.value = "";
             workspaceArea.classList.add('hidden');
             dropZone.classList.remove('hidden');
-            btnProcess.classList.remove('hidden');
-            btnDownload.classList.add('hidden');
         });
 
-        // Process Button (Simulation)
+        // 3. Tombol Proses AI (Simulasi)
         btnProcess.addEventListener('click', () => {
             loadingOverlay.classList.remove('hidden');
             btnProcess.disabled = true;
             btnReset.disabled = true;
 
-            // SIMULASI PROSES API (Delay 3 detik)
-            // Di versi selanjutnya, di sinilah kita akan meletakkan kode fetch() ke API AI yang sebenarnya.
+            // Simulasi delay pemrosesan API (3 detik)
             setTimeout(() => {
                 loadingOverlay.classList.add('hidden');
                 
-                // Menukar tombol Proses dengan Unduh
+                // Menyiapkan Slider Before/After
+                imagePreview.classList.add('hidden');
+                compareContainer.classList.remove('hidden');
+                
+                // Set gambar Before (Asli) dan After (Hasil)
+                imageBefore.src = currentImageDataURL;
+                imageAfter.src = currentImageDataURL; 
+                
+                // HANYA UNTUK DEMO: Kita tambahkan filter CSS agar terlihat "berbeda" 
+                // Di masa depan, imageAfter.src akan diisi dengan URL gambar dari API
+                imageAfter.style.filter = "contrast(1.1) brightness(1.1) grayscale(20%)";
+                
+                // Reset posisi slider ke tengah (50%)
+                compareSlider.value = 50;
+                updateSliderPosition(50);
+                
+                // Tukar Tombol
                 btnProcess.classList.add('hidden');
                 btnDownload.classList.remove('hidden');
-                
                 btnProcess.disabled = false;
                 btnReset.disabled = false;
-                
-                // Opsional: Anda bisa menambahkan efek visual (seperti filter) untuk mensimulasikan perubahan
-                // imagePreview.style.filter = "contrast(1.2)"; 
-                
             }, 3000);
         });
 
-        // Download Button (Downloads the displayed image)
+        // 4. Logika Slider Interaktif
+        function updateSliderPosition(value) {
+            // Memotong gambar asli (Before) sesuai posisi slider
+            imageBefore.style.clipPath = `inset(0 ${100 - value}% 0 0)`;
+            // Menggerakkan visual garis putih
+            sliderHandle.style.left = `${value}%`;
+        }
+
+        compareSlider.addEventListener('input', (e) => {
+            updateSliderPosition(e.target.value);
+        });
+
+        // 5. Tombol Unduh
         btnDownload.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'EraseAI_Result.png';
-            link.href = imagePreview.src;
+            link.download = 'EraseAI_Cleaned.png';
+            link.href = imageAfter.src; // Mengunduh gambar hasil
             link.click();
         });
     </script>
